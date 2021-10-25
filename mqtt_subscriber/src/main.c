@@ -47,5 +47,6 @@ int main(int argc, char *argv[])
 
     uci_free();
     sqlite3_messaging_ctx_close();
-    
+
+    return 0;
 }
