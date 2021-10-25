@@ -11,6 +11,8 @@
 #include "base.h"
 #include "arg_parsing.h"
 #include "mqtt.h"
+#include "uci_read.h"
+#include "sqlite3_logging.h"
 
 int interrupt = 0;
 
@@ -31,10 +33,19 @@ int main(int argc, char *argv[])
     sigaction(SIGTERM, &action, NULL);
     sigaction(SIGINT, &action, NULL);
 
-    rc = parse_subscriber_arguments(argc, argv, &arguments);
-    if (rc) {
-        return rc;
-    }
+    struct topic topics[TOPIC_MAX_COUNT];
+    int size = -1;
 
-    run_mqtt_service(&arguments, &interrupt);
+    parse_subscriber_arguments(argc, argv, &arguments);
+
+    uci_alloc();
+    sqlite3_messaging_ctx_create();
+
+    uci_set_topics(topics, &size);
+
+    run_mqtt_service(arguments, topics, size, &interrupt);
+
+    uci_free();
+    sqlite3_messaging_ctx_close();
+    
 }

@@ -4,6 +4,6 @@
 #include "base.h"
 typedef int error_t;
 
-int run_mqtt_service(struct arguments *args, int *interrupt);
+int run_mqtt_service(struct arguments args, struct topic *topics, int topic_count, int *interrupt);
 
 #endif

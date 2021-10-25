@@ -1,6 +1,7 @@
 // Standard C libraries
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 // Standard GNU libraries
 #include <argp.h>
 // Local headers
@@ -20,11 +21,11 @@ static char args_doc[] = "[ARG...] -h, -n are mandatory";
 
 // cli argument availble options.
 static struct argp_option options[] = {
-    {"tls",         't', 0,             0, "Use TLS to encrypt message- otherwise messages will be send in plain-text"},
-    {"username",    'u', "username",    0, "Username to connect to the MQTT broker"},
-    {"password",    'p', "password",    0, "Password to connect to the MQTT broker"},
-    {"host_ip",     'h', "ip",          0, "IP address of the MQTT broker"},
-    {"port",        'n', "portnumber",  0, "Port number to use when connecting to host_ip"},
+    {"tls",         't', "tls_certificate_path",    0, "Use TLS to encrypt message- otherwise messages will be send in plain-text"},
+    {"username",    'u', "username",                0, "Username to connect to the MQTT broker"},
+    {"password",    'p', "password",                0, "Password to connect to the MQTT broker"},
+    {"host_ip",     'h', "ip",                      0, "IP address of the MQTT broker"},
+    {"port",        'n', "portnumber",              0, "Port number to use when connecting to host_ip"},
     {0}
 };
 
@@ -32,11 +33,12 @@ static struct argp_option options[] = {
 static error_t parse_opt(int key, char *arg, struct argp_state *state){
 
     struct arguments *arguments = state->input;
-    arguments->topics_size = state->arg_num;
+
+    char *temp;
     switch(key){
 
         case 't':
-            arguments->use_tls = 1;
+            arguments->tls_certificate_path = arg;
             break;
         case 'u':
             arguments->username = arg;
@@ -51,23 +53,20 @@ static error_t parse_opt(int key, char *arg, struct argp_state *state){
             arguments->port = atoi(arg);
             if (arguments->port == 0) {
                 fprintf(stderr, "Error while parsing port number.\n");
-                
             }
             break;
 
         case ARGP_KEY_ARG:
-        
             // Too many arguments.
-            if(state->arg_num > TOPIC_MAX_COUNT)
+            if(state->arg_num > 0)
                 argp_usage(state);
 
-            arguments->topics[state->arg_num] = arg;
             break;
 
         case ARGP_KEY_END:
 
             // Not enough arguments.
-            if(state->arg_num < 1)
+            if (state->arg_num < 0)
                 argp_usage(state);
             break;
 
@@ -89,6 +88,15 @@ static int check_mandatory_options(struct arguments *args)
         fprintf(stderr, "No mandatory flag '-n' for port number provided\n");
         is_err = 1;
     }
+    if (args->tls_certificate_path == -1) {
+        fprintf(stderr, "No flag '-t' for TLS certiciate provided\n");
+    }
+    if (args->username == -1) {
+        fprintf(stderr, "No flag '-u' for username provided\n");
+    }
+    if (args->password == -1) {
+        fprintf(stderr, "No flag '-p' for password provided\n");
+    }
     return is_err;
 }
 
@@ -98,8 +106,7 @@ int parse_subscriber_arguments(int argc, char *args[], struct arguments *out_arg
     struct argp argp = {options, parse_opt, args_doc, doc};
 
     // set the default values for all of the args.
-    out_arg->topics_size = -1;
-    out_arg->use_tls = 0;
+    out_arg->tls_certificate_path = NULL;
     out_arg->username = NULL;
     out_arg->password = NULL;
     out_arg->host_ip = NULL;
@@ -113,7 +120,7 @@ int parse_subscriber_arguments(int argc, char *args[], struct arguments *out_arg
         return -1;
     }
 
-    printf("Use TLS: %s\n", out_arg->use_tls? "yes" : "no");
+    printf("Use TLS: %s\n", out_arg->tls_certificate_path? "yes" : "no");
     printf("Username: %s\n", out_arg->username? out_arg->username : "no username provided");
     printf("Password: %s\n", out_arg->password? out_arg->password : "no password provided");
     printf("Host_ip: %s\n", out_arg->host_ip);

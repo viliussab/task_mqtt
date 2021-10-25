@@ -1,6 +1,6 @@
 CC:=gcc
 BIN:=mqtt_subscriber
-LDFLAGS:=-lmosquitto -largp
+LDFLAGS:=-lmosquitto -largp -lubox -luci -lsqlite3
 SRC:=$(wildcard *.c)
 OBJS:=$(SRC:.c=.o)
 

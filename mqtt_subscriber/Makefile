@@ -9,7 +9,7 @@ include $(INCLUDE_DIR)/package.mk
 define Package/mqtt_subscriber
 	CATEGORY:=Base system
 	TITLE:=mqtt_subscriber
-	DEPENDS:=+libmosquitto
+	DEPENDS:=+libmosquitto +libuci +libsqlite3
 endef
 
 define Package/mqtt_subscriber/description
@@ -18,6 +18,7 @@ endef
 
 define Package/mqtt_subscriber/install
 	$(INSTALL_DIR) $(1)/usr/bin
+	$(INSTALL_DIR) $(1)/etc/config $(1)/etc/init.d
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/mqtt_subscriber $(1)/usr/bin
 
 	$(INSTALL_DIR) $(1)/etc/config $(1)/etc/init.d
