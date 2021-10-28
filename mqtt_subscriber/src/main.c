@@ -24,6 +24,7 @@ void term_proc(int signo)
 
 int main(int argc, char *argv[])
 {
+    fprintf(stdout, "MQTT subscriber is starting...\n");
     int rc = 0;
     struct arguments arguments;
     struct sigaction action;
@@ -36,7 +37,10 @@ int main(int argc, char *argv[])
     struct topic topics[TOPIC_MAX_COUNT];
     int size = -1;
 
-    parse_subscriber_arguments(argc, argv, &arguments);
+    rc = parse_subscriber_arguments(argc, argv, &arguments);
+    if (rc) {
+        return rc;
+    }
 
     uci_alloc();
     sqlite3_messaging_ctx_create();
@@ -47,6 +51,6 @@ int main(int argc, char *argv[])
 
     uci_free();
     sqlite3_messaging_ctx_close();
-
-    return 0;
+    
+    return rc;
 }

@@ -50,21 +50,22 @@ int run_mqtt_service(struct arguments args, struct topic *topics, int topic_coun
 	}
     mosquitto_connect_callback_set(mosq, on_connect);
     mosquitto_message_callback_set(mosq, on_message);
-    if (args.username != NULL && args.password != NULL) {
+
+    if (args.enable_username_pw) {
         rc = mosquitto_username_pw_set(mosq, args.username, args.password);
         if (rc) {
             fprintf(stderr, "Could not set username and password with return code %d\n", rc);
             goto cleanup_mosq_obj;
         }
-    } else {
-        fprintf(stdout, "Username and password not specified, trying to connect without credentials\n");
     }
 
     // TLS. TLS implementation should be expanded later. For, it only approves .ca files
-    if (args.tls_certificate_path != NULL) {
-        mosquitto_tls_set(mosq, args.tls_certificate_path, NULL, NULL, NULL, NULL);
-    } else {
-        fprintf(stdout, "TLS file not specified, communication will be done in plaintext\n");
+    if (args.tls_enable) {
+        rc = mosquitto_tls_set(mosq, args.cafile_path, NULL, args.certfile_path, args.keyfile_path, NULL);
+        if (rc) {
+            fprintf(stderr, "Could not set tls parameters with return code %d\n", rc);
+            goto cleanup_mosq_obj;
+        }
     }
 
     rc = mosquitto_connect(mosq, args.host_ip, args.port, 30);

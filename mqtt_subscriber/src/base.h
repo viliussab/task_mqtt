@@ -5,11 +5,17 @@
 
 // define a struct to hold the arguments.
 struct arguments {
+    int enable_username_pw;
     char *username;
     char *password;
+
     char *host_ip;
-    char *tls_certificate_path;
     int port;
+
+    int tls_enable;
+    char *cafile_path;
+    char *certfile_path;
+    char *keyfile_path;
 };
 
 struct topic {

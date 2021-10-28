@@ -23,7 +23,7 @@ static int create_db()
          "create table if not exists Message(" 
          "message TEXT, "
          "topic_name TEXT, "
-         "datetime TEXT"
+         "datetime INTEGER"
          ")"
          ,
          NULL, // callback argument. If callback is needed replace NULL
@@ -72,15 +72,13 @@ int save_message_to_db(const char* message, const char* topic)
     topic_idx = sqlite3_bind_parameter_index(statement, "@topic_name");
     datetime_idx = sqlite3_bind_parameter_index(statement, "@datetime");
 
-    char current_time[128] = "";
-    time_t now = time(NULL);
-    struct tm *t = localtime(&now);
-    strftime(current_time, sizeof(current_time) - 1, "%Y-%m-%d %H:%M", t);
 
-    sqlite3_bind_text(statement,  message_idx,  message,        strlen(message),        NULL);
-    sqlite3_bind_text(statement,  topic_idx,    topic,          strlen(topic),          NULL);
-    sqlite3_bind_text(statement,  datetime_idx, current_time,   strlen(current_time),   NULL);
+    int unixtime = (int)time(NULL);
 
+    sqlite3_bind_text(statement,    message_idx,  message,        strlen(message),        NULL);
+    sqlite3_bind_text(statement,    topic_idx,    topic,          strlen(topic),          NULL);
+    sqlite3_bind_int (statement,    datetime_idx, unixtime);
+    
     rc = sqlite3_step(statement);
     if (rc != SQLITE_DONE) {
         PRINT_SQLITE_ERROR("The query was not executed properly");
