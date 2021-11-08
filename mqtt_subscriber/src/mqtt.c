@@ -6,11 +6,18 @@
 #include "mqtt.h"
 #include "sqlite3_logging.h"
 
+static bool connection_error = false;
+
 static void on_connect(struct mosquitto *mosq, void *obj, int rc)
 {
     fprintf(stdout, "Connection with ID: %d\n", *(int *)obj);
     if (rc) {
-        fprintf(stderr, "Error with result code: %d\n", rc);
+        if (rc == MOSQ_ERR_CONN_REFUSED) {
+            fprintf(stderr, "Broker does not acknowledge the connect (perhaps certificate files or username/password combination is false), aborting...\n");
+            connection_error = true;
+        } else {
+            fprintf(stderr, "Error with result code: %d\n", rc);
+        }
     }
 }
 
@@ -80,7 +87,7 @@ int run_mqtt_service(struct arguments args, struct topic *topics, int topic_coun
     }
 
     mosquitto_loop_start(mosq);
-    while (!(*interrupt)) {
+    while (!(*interrupt) && !connection_error) {
         fflush(stdout);
         sleep(1);
     }

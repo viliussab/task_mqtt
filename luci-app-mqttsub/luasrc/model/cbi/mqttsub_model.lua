@@ -1,7 +1,7 @@
 local map = Map("mqtt_subscriber")
 
 local certs = require "luci.model.certificate"
-local s = map:section(NamedSection, "general", "mqtt_subscriber",  translate(""), translate(""))
+local s = map:section(NamedSection, "general", "mqtt_subscriber",  translate("Connection configuration"), translate(""))
 
 enabled_pub = s:option(Flag, "enable", translate("Enable"), translate("Select to enable MQTT publisher"))
 
@@ -147,59 +147,10 @@ end
 
 -- View messages
 
-local s = map:section(Table, messages, translate("Messages received"), translate(""))
-s.anonymous = true
-s.template = "message_table"
-s.addremove = false
-s.refresh = true
-s.table_config = {
-    truncatePager = true,
-    labels = {
-        placeholder = "Search...",
-        perPage = "Messages per page {select}",
-        noRows = "No entries found",
-        info = ""
-    },
-    layout = {
-        top = "<table><tr style='padding: 0 !important; border:none !important'><td style='display: flex !important; flex-direction: row'>{select}<span style='margin-left: auto; width:100px'>{search}</span></td></tr></table>",
-        bottom = "{info}{pager}"
-    }
-}
-
-o = s:option(DummyValue, "date", translate("Date"))
-o = s:option(DummyValue, "topic", translate("Topic"))
-o = s:option(DummyValue, "message", translate("Message"))
-
-s:option(DummyValue, "", translate(""))
-
 
 -- Add topics
 
-local st_topic = map:section(TypedSection, "mqttsub_topic", translate("Topics"), translate("") )
-st_topic.addremove = true
-st_topic.anonymous = true
-st_topic.novaluetext = translate("There are no topics created yet.")
-
-local topic = st_topic:option(Value, "name", translate("Topic name"), translate(""))
-topic.datatype = "string"
-topic.maxlength = 512
-topic.placeholder = translate("Topic")
-topic.rmempty = false
-topic.parse = function(self, section, novld, ...)
-	local value = self:formvalue(section)
-	if value == nil or value == "" then
-		self.map:error_msg(translate("Topic name can not be empty"))
-		self.map.save = false
-	end
-	Value.parse(self, section, novld, ...)
-end
-
-local qos = st_topic:option(ListValue, "security_level", translate("QoS level"), translate("The publish/subscribe QoS level used for this topic"))
-qos:value("0", "At most once (0)")
-qos:value("1", "At least once (1)")
-qos:value("2", "Exactly once (2)")
-qos.rmempty=false
-qos.default="0"
 
 
 return map
+
