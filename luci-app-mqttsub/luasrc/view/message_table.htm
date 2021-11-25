@@ -34,7 +34,7 @@ function get_messages()
 	local messages = {}
 
 	local sqlite3 = require("lsqlite3")
-	DB_PATH = "/var/log/mqtt_subscriber.db"
+	DB_PATH = "/log/mqtt_subscriber.db"
 
 	local db = sqlite3.open(DB_PATH)
 	if db then

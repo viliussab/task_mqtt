@@ -1,7 +1,7 @@
 CC:=gcc
 BIN:=mqtt_subscriber
-LDFLAGS:=-lmosquitto -largp -lubox -luci -lsqlite3
-SRC:=$(wildcard *.c)
+LDFLAGS:=-lmosquitto -largp -lubox -luci -lsqlite3 -ljson-c -lcurl
+SRC:= $(shell find $(SOURCEDIR) -name '*.c')
 OBJS:=$(SRC:.c=.o)
 
 .PHONY: all clean

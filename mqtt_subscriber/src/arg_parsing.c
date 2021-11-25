@@ -94,38 +94,38 @@ static error_t parse_opt(int key, char *arg, struct argp_state *state){
         return ARGP_ERR_UNKNOWN;
     }
 
-    return 0;
+    return SUCCESS;
 }
 
 static int check_mandatory_options(struct arguments *args)
 {
-    int is_err = 0;
+    int rc = SUCCESS;
     int use_username_password = 1;
 
     if (args->host_ip == NULL) {
         fprintf(stderr, "No mandatory flag '-h' for host ip address provided\n");
-        is_err = 1;
+        rc = INPUT_ERR;
     }
     if (args->port == 0) {
         fprintf(stderr, "No mandatory flag '-p' for port number provided\n");
-        is_err = 1;
+        rc = INPUT_ERR;
     }
 
     if (args->tls_enable == 1) {
-        int tls_err = 0;
+        int tls = SUCCESS;
         if (args->cafile_path == NULL) {
             fprintf(stderr, "No flag '-C' for certficicate authority .cert file path provided, even though TLS is enabled\n");
-            tls_err = 1;
+            tls = INSUFFICIENT;
         }
         if (args->certfile_path == NULL) {
             fprintf(stderr, "No flag '-c' for mqtt subscriber .cert file path provided, even though TLS is enabled\n");
-            tls_err = 1;
+            tls = INSUFFICIENT;
         }
         if (args->cafile_path == NULL) {
             fprintf(stderr, "No flag '-k' for mqtt subscriber .key file path provided, even though TLS is enabled\n");
-            tls_err = 1;
+            tls = INSUFFICIENT;
         }
-        if (tls_err) {
+        if (tls == INSUFFICIENT) {
             args->tls_enable = 0;
         }
     }
@@ -140,11 +140,12 @@ static int check_mandatory_options(struct arguments *args)
     }
     args->enable_username_pw = use_username_password;
 
-    return is_err;
+    return rc;
 }
 
 int parse_subscriber_arguments(int argc, char *args[], struct arguments *out_arg)
 {
+    int rc = SUCCESS;
     // initialize the argp struct. Which will be used to parse and use the args.
     struct argp argp = {options, parse_opt, args_doc, doc};
 
@@ -162,11 +163,13 @@ int parse_subscriber_arguments(int argc, char *args[], struct arguments *out_arg
     out_arg->port = 0;
 
     // parse the cli arguments.
-    argp_parse(&argp, argc, args, 0, 0, out_arg);
-
-    int rc = check_mandatory_options(out_arg);
+    rc = argp_parse(&argp, argc, args, 0, 0, out_arg);
     if (rc) {
-        return 1;
+        return INPUT_ERR;
+    }
+    rc = check_mandatory_options(out_arg);
+    if (rc) {
+        return INPUT_ERR;
     }
 
     printf("Use TLS: %s\n", out_arg->tls_enable? "yes" : "no");
@@ -174,7 +177,5 @@ int parse_subscriber_arguments(int argc, char *args[], struct arguments *out_arg
     printf("Host_ip: %s\n", out_arg->host_ip);
     printf("Ports: %d\n", out_arg->port);
 
-    return 0;
+    return SUCCESS;
 }
-
-

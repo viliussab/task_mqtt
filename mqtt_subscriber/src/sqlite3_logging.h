@@ -1,9 +1,9 @@
 #ifndef MESSAGE_LOGGING_H
 #define MESSAGE_LOGGING_H
 
-int sqlite3_messaging_ctx_create();
-void sqlite3_messaging_ctx_close();
+#include <sqlite3.h>
 
-int save_message_to_db(const char* message, const char* topic);
+sqlite3* sqlite3_create_db();
+int save_message_to_db(sqlite3* db, const char* message, const char* topic);
 
 #endif

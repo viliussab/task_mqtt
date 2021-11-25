@@ -7,19 +7,16 @@
 #include "sqlite3_logging.h"
 #include <unistd.h>
 
-#define LOG_FILE "/var/log/mqtt_subscriber.db"
+#define LOG_FILE "/log/mqtt_subscriber.db"
 
-#define PRINT_SQLITE_ERROR(MESSAGE) \
-        fprintf(stderr, "sqlite3 error: %s\n", sqlite3_errmsg(g_db)); \
+#define PRINT_SQLITE_ERROR(MESSAGE, db) \
+        fprintf(stderr, "sqlite3 error: %s\n", sqlite3_errmsg(db)); \
         fprintf(stderr, "%s\n", MESSAGE);
 
-
-static sqlite3 *g_db = NULL;
-
-static int create_db()
+static int create_db(sqlite3* db)
 {
     int rc = 0;
-    rc = sqlite3_exec(g_db,
+    rc = sqlite3_exec(db,
          "create table if not exists Message(" 
          "message TEXT, "
          "topic_name TEXT, "
@@ -30,27 +27,31 @@ static int create_db()
          0,
          NULL);
     if (rc) {
-        PRINT_SQLITE_ERROR("Failed to create the database table, aborting...");
+        PRINT_SQLITE_ERROR("Failed to create the database table, aborting...", db);
+        sqlite3_close(db);
     }
     return rc;
 }
 
-int sqlite3_messaging_ctx_create()
+sqlite3* sqlite3_create_db()
 {
+    sqlite3 *db = NULL;
     int rc = 0;
 
-    rc = sqlite3_open(LOG_FILE, &g_db);
+    rc = sqlite3_open(LOG_FILE, &db);
     if (rc) {
-        PRINT_SQLITE_ERROR("Failed while opening the database");
-        sqlite3_close(g_db);
-        return rc;
+        PRINT_SQLITE_ERROR("Failed while opening the database", NULL);
+        sqlite3_close(db);
+        return NULL;
     }
-
-    rc = create_db();
-    return rc;
+    rc = create_db(db);
+    if (rc) {
+        return NULL;
+    }
+    return db;
 }
 
-int save_message_to_db(const char* message, const char* topic)
+int save_message_to_db(sqlite3* db, const char* message, const char* topic)
 {
     int rc = 0;
 
@@ -61,17 +62,16 @@ int save_message_to_db(const char* message, const char* topic)
 
     char* sql = "insert into Message(message, topic_name, datetime) values (@message, @topic_name, @datetime)";
 
-    rc = sqlite3_prepare_v2(g_db, sql, -1, &statement, NULL);
+    rc = sqlite3_prepare_v2(db, sql, -1, &statement, NULL);
 
     if (rc) {
-        PRINT_SQLITE_ERROR("Failed to prepare statement")
+        PRINT_SQLITE_ERROR("Failed to prepare statement", db)
         return rc;
     }
 
     message_idx = sqlite3_bind_parameter_index(statement, "@message");
     topic_idx = sqlite3_bind_parameter_index(statement, "@topic_name");
     datetime_idx = sqlite3_bind_parameter_index(statement, "@datetime");
-
 
     int unixtime = (int)time(NULL);
 
@@ -81,20 +81,12 @@ int save_message_to_db(const char* message, const char* topic)
     
     rc = sqlite3_step(statement);
     if (rc != SQLITE_DONE) {
-        PRINT_SQLITE_ERROR("The query was not executed properly");
+        PRINT_SQLITE_ERROR("The query was not executed properly", db);
     }
     rc = sqlite3_finalize(statement);
     if (rc) {
-        PRINT_SQLITE_ERROR("SQL query statement deallocation error");
+        PRINT_SQLITE_ERROR("SQL query statement deallocation error", db);
     }
 
     return rc;
-}
-
-void sqlite3_messaging_ctx_close()
-{
-    int rc = sqlite3_close(g_db);
-    if (rc) {
-        PRINT_SQLITE_ERROR("Failed to close the database");
-    }
 }
